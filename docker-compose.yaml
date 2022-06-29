@@ -1,0 +1,43 @@
+version: "3.9"
+
+services:
+  broker:
+    container_name: broker
+    image: rabbitmq:3.8-management
+    ports:
+      - '1883:1883'
+      - '5672:5672'
+      - '5671:5671'
+      - '15672:15672'
+      - '25672:25672'
+      
+  es:
+    container_name: es
+    build:
+      context: datastore/elasticsearch
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+
+  kibana:
+    container_name: kibana
+    build:
+      context: datastore/kibana
+    ports:
+      - "5601:5601"
+    links:
+      - es:elasticsearch
+
+volumes:
+  es-data:
+    driver: local
